@@ -9,6 +9,5 @@
   "Compile the Clojurescript."
   []
   (comp
-    (cljs :compiler-options {:asset-path "target/main.out"
-                             :libs ["asteroids"]})
+    (cljs :compiler-options {:asset-path "asteroids/target/main.out"})
     (target)))

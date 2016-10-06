@@ -1,10 +1,32 @@
 (ns game.asteroid
   (:require [game.piece :as piece]
             [game.point :as point]
+            [game.util :as util]
             [game.vector :as vtr]))
 
 (defrecord Asteroid
   [type id old-center center direction size])
+
+(defn random
+  ""
+  []
+  (let [pos-x (util/random-int 0 util/max-x)
+        pos-y (util/random-int 0 util/max-y)
+        dir-x (util/random-int -5 5)
+        dir-y (util/random-int -5 5)]
+    (Asteroid. :asteroid nil nil (point/Point. pos-x pos-y) (vtr/Vector. dir-x dir-y) 2)))
+
+(defn split
+  ""
+  [asteroid]
+  (case (:size asteroid)
+    2 (let [[left-direction right-direction] (vtr/split (:direction asteroid))
+            left-center (point/move (:center asteroid) (vtr/Vector. -1 0))
+            right-center (point/move (:center asteroid) (vtr/Vector. 1 0))]
+        [(Asteroid. :asteroid nil nil left-center left-direction 1)
+         (Asteroid. :asteroid nil nil right-center right-direction 1)])
+    1 []
+    (throw (js/Error. "invalid size"))))
 
 (defmethod piece/move :asteroid
   [asteroid]
@@ -17,7 +39,7 @@
   ""
   [asteroid center-kw]
   (let [center (get asteroid center-kw)]
-    (case size
+    (case (:size asteroid)
       2 [center
          (point/move center (vtr/Vector. 1 0))
          (point/move center (vtr/Vector. -1 0))
@@ -28,7 +50,9 @@
 
 (defmethod piece/old-points :asteroid
   [asteroid]
-  (points asteroid :old-center))
+  (if (:old-center asteroid)
+    (points asteroid :old-center)
+    []))
 
 (defmethod piece/points :asteroid
   [asteroid]

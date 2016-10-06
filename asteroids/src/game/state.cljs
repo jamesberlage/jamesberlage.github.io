@@ -5,20 +5,10 @@
 
 (def id (atom 0))
 
-(defn next-id
-  "Returns the next generated id."
-  []
-  (let [fetched (atom nil)]
-    (swap! id (fn [id]
-                (reset! fetched id)
-                (inc id)))
-    @fetched))
-
-;; State looks like this:
-;;
-;; {:changes {"(24,7)" 4}
-;;  :pieces {}
-;;  :status :ongoing}
+(defn move-piece
+  "Moves an individual piece, updating the state with the new location."
+  [state piece]
+  (update state :pieces assoc (:id piece) (pc/move piece)))
 
 (defn whiteout-point
   "Signals that a point should be cleared on the next render.  If the point is already owned by another object, we don't clear it.
@@ -32,13 +22,6 @@ Examples:
     (if (contains? (:changes state) point)
       state
       (update state :changes assoc point nil))))
-
-(defn whiteout-points
-  "See whiteout-point above.  Operates on a collection."
-  [state points]
-  (if (empty? points)
-    state
-    (whiteout-points (whiteout-point state (first points)) (rest points))))
 
 (deftype CollisionError
   [id other])
@@ -58,12 +41,14 @@ Examples:
         (throw (CollisionError. (:id piece) old-id))))
     (update state :changes assoc point (:id piece))))
 
-(defn assign-points
-  "See assign-point above.  Operates on a collection."
-  [state points piece]
-  (if (empty? points)
-    state
-    (assign-points (assign-point state (first points) piece) (rest points) piece)))
+(defn next-id
+  "Returns the next generated id."
+  []
+  (let [fetched (atom nil)]
+    (swap! id (fn [id]
+                (reset! fetched id)
+                (inc id)))
+    @fetched))
 
 (defn add-asteroid
   ""
@@ -71,13 +56,6 @@ Examples:
   (let [id (next-id)
         asteroid (assoc asteroid :id id)]
     (update state :pieces assoc id asteroid)))
-
-(defn add-asteroids
-  ""
-  [state asteroids]
-  (if (empty? asteroids)
-    state
-    (add-asteroids (add-asteroid state (first asteroids)) (rest asteroids))))
 
 (defmulti determine-changes-for-piece
   ""
@@ -89,10 +67,10 @@ Examples:
 (defmethod determine-changes-for-piece :asteroid
   [state asteroid]
   (let [;; Signal that the previous location(s) owned by this asteroid may need to be cleared.
-        state (whiteout-points state (pc/old-points asteroid))]
+        state (reduce whiteout-point state (pc/old-points asteroid))]
     (try
       ;; Attempt to allocate points on the map to this asteroid.
-      (assign-points state (pc/points asteroid) asteroid)
+      (reduce #(assign-point %1 %2 asteroid) state (pc/points asteroid))
       (catch CollisionError e
         (let [other-asteroid (get-in state [:pieces (.-other e)])
               ;; Split the asteroids in two (if possible).
@@ -101,7 +79,7 @@ Examples:
               state (update state :pieces dissoc (:id asteroid))
               state (update state :pieces dissoc (.-other e))
               ;; Add any debris (new-asteroids)
-              state (add-asteroids new-asteroids)]
+              state (reduce add-asteroid state new-asteroids)]
           (throw (SplitAsteroidsError. state)))))))
 
 (defn determine-changes
@@ -109,7 +87,8 @@ Examples:
   [state]
   (try
     (let [initial-state (assoc state :changes {})
-          pieces (:pieces state)]
+          pieces (map second (:pieces state))]
+      ;; Attempt to give each piece the points on the board it wants.
       (reduce determine-changes-for-piece initial-state pieces))
     ;; We bubble up the fact that any asteroids collided and were made into debris, since that
     ;; changes the number of pieces in the game.  We now need to recalculate what changes need to
@@ -117,12 +96,32 @@ Examples:
     (catch SplitAsteroidsError e
       (determine-changes (.-state e)))))
 
-(defn move-piece
-  ""
-  [state piece]
-  (update state :pieces assoc (:id piece) (pc/move piece)))
+(defrecord State
+  [changes pieces])
 
-(defn move-pieces
+(defn init
+  ""
+  []
+  (let [new-asteroids (repeatedly 10 ad/random)
+        state (State. {} {})
+        state (reduce add-asteroid state new-asteroids)
+        state (determine-changes state)]
+    state))
+
+(defn step
   ""
   [state]
-  (reduce move-piece state (:pieces state)))
+  (let [;; Move each piece on the board to its new location.
+        pieces (map second (:pieces state))
+        state (reduce move-piece state pieces)
+        ;; Figure out what changes need to be made on the next render.
+        state (determine-changes state)]
+    state))
+
+(defn render
+  ""
+  [state drawing-context]
+  (doseq [[point id] (:changes state)]
+    (let [point (pt/<-string point)]
+      (set! (.-fillStyle drawing-context) "blue")
+      (.fillRect drawing-context (:x point) (:y point) 1 1))))

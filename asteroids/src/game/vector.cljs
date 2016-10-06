@@ -1,7 +1,6 @@
 (ns game.vector)
 
 (defrecord Vector
-  ""
   [x y])
 
 (defn split

@@ -1,14 +1,20 @@
 (ns game.point
-  (:require [game.globals :refer [max-x max-y]]))
+  (:require [clojure.string :refer [split]]
+            [game.util :refer [max-x max-y]]))
 
 (defrecord Point
-  ""
   [x y])
 
-(defn id
+(defn ->string
   ""
   [point]
-  (str "(" (:x point) "," (:y point) ")"))
+  (str (:x point) "," (:y point)))
+
+(defn <-string
+  ""
+  [point]
+  (let [[x y] (split point #"," 2)]
+    (Point. x y)))
 
 (defn move
   ""
