@@ -1,10 +1,28 @@
-#mnt {
-  margin-left: auto;
-  margin-right: auto;
-  text-align: center;
+body {
+  font-family: 'Tinos', serif;
 }
 
-#mnt > #asteroids {
-  height: 100%;
-  width: 100%;
+h1:before {
+  content: "#";
+  margin-right: 0.5em;
+}
+
+h2:before {
+  content: "##";
+  margin-right: 0.5em;
+}
+
+h3:before {
+  content: "###";
+  margin-right: 0.5em;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li:before {
+  content: "-";
+  margin-right: 0.5em;
 }

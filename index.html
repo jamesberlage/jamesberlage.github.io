@@ -2,12 +2,37 @@
 <html>
   <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="bootstrap-3.3.7.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Tinos" rel="stylesheet">
     <link href="index.css" rel="stylesheet" type="text/css">
   </head>
   <body>
-    <div id="mnt">
-      <p>You must have Javascript enabled to play this game.  If Javascript is enabled, please wait while we load the game...</p>
+    <div class="container">
+      <h1>Jim Berlage</h1>
+      <ul>
+        <li><a href="https://github.com/jimberlage">Github</a></li>
+        <li><a href="mailto:james.berlage@gmail.com">james.berlage@gmail.com</a></li>
+        <li><a href="tel:13172179716">+1 (317) 217-9716</a></li>
+      </ul>
+      <h2>About Me</h2>
+      <p>I'm a Chicago-based full-stack web developer.  I particularly enjoy working with Clojure (or Clojurescript), but I have experience with Ruby, Javascript, Go, and Rust.</p>
+      <h2>CLJS Demo</h2>
+      <p>Want to try out Clojurescript?  Type some valid CLJS here, then click Run! (must have Javascript enabled to work.)</p>
+      <h3>Code</h3>
+      <pre id="code" contenteditable="true">(defn factorial
+  [x]
+  (cond
+    (not= (type x) js/Number) (throw (js/Error. "x must be a number"))
+    (&lt; x 0)                   (throw (js/Error. "x must be &gt; 0"))
+    (= x 0)                   1
+    :else                     (* x (factorial (- x 1)))))
+
+(factorial 5)</pre>
+      <h3>Output</h3>
+      <pre id="result"></pre>
+      <button id="eval" class="btn btn-primary">Run!</button>
+      <script src="cljs-demo/target/main.js"></script>
     </div>
-    <script type="text/javascript" src="asteroids/target/main.js"></script>
   </body>
 </html>

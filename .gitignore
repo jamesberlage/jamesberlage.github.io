@@ -3,3 +3,5 @@
 
 asteroids/target
 asteroids/tmp
+
+cljs-demo/target/*/*
