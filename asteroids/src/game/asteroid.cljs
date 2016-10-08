@@ -8,16 +8,14 @@
   [type id old-center center direction size])
 
 (defn random
-  ""
+  "Returns a random asteroid anywhere on the screen, with a random directon of travel."
   []
   (let [pos-x (util/random-int 0 util/max-x)
-        pos-y (util/random-int 0 util/max-y)
-        dir-x (util/random-int -5 5)
-        dir-y (util/random-int -5 5)]
-    (Asteroid. :asteroid nil nil (point/Point. pos-x pos-y) (vtr/Vector. dir-x dir-y) 2)))
+        pos-y (util/random-int 0 util/max-y)]
+    (Asteroid. :asteroid nil nil (point/Point. pos-x pos-y) (vtr/random) 2)))
 
 (defn split
-  ""
+  "Splits a vector into \"debris\" (two smaller vectors), or removes the vector entirely, depending on its size."
   [asteroid]
   (case (:size asteroid)
     2 (let [[left-direction right-direction] (vtr/split (:direction asteroid))
@@ -36,7 +34,7 @@
         (assoc :center (point/move (:center asteroid) (:direction asteroid))))))
 
 (defn points
-  ""
+  "Returns the points allocated to the asteroid.  If center-kw == :center, it will use the current center of the asteroid for reference; if center-kw == :old-center, it will use the old center."
   [asteroid center-kw]
   (let [center (get asteroid center-kw)]
     (case (:size asteroid)

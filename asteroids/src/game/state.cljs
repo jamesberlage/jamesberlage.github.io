@@ -1,7 +1,8 @@
 (ns game.state
   (:require [game.asteroid :as ad]
             [game.piece :as pc]
-            [game.point :as pt]))
+            [game.point :as pt]
+            [game.util :as util]))
 
 (def id (atom 0))
 
@@ -51,14 +52,14 @@ Examples:
     @fetched))
 
 (defn add-asteroid
-  ""
+  "Adds an asteroid to the pieces on the board, assigning it a new unique id."
   [state asteroid]
   (let [id (next-id)
         asteroid (assoc asteroid :id id)]
     (update state :pieces assoc id asteroid)))
 
 (defmulti determine-changes-for-piece
-  ""
+  "Figures out what changes need to be made for the given piece."
   #(:type %2))
 
 (deftype SplitAsteroidsError
@@ -87,7 +88,7 @@ Examples:
   [state]
   (try
     (let [initial-state (assoc state :changes {})
-          pieces (map second (:pieces state))]
+          pieces (vals (:pieces state))]
       ;; Attempt to give each piece the points on the board it wants.
       (reduce determine-changes-for-piece initial-state pieces))
     ;; We bubble up the fact that any asteroids collided and were made into debris, since that
@@ -100,7 +101,7 @@ Examples:
   [changes pieces])
 
 (defn init
-  ""
+  "Gets the initial state for the game."
   []
   (let [new-asteroids (repeatedly 10 ad/random)
         state (State. {} {})
@@ -109,10 +110,10 @@ Examples:
     state))
 
 (defn step
-  ""
+  "Moves pieces on the board, then figures out what changes to apply on the next render."
   [state]
   (let [;; Move each piece on the board to its new location.
-        pieces (map second (:pieces state))
+        pieces (vals (:pieces state))
         state (reduce move-piece state pieces)
         ;; Figure out what changes need to be made on the next render.
         state (determine-changes state)]
@@ -122,6 +123,11 @@ Examples:
   ""
   [state drawing-context]
   (doseq [[point id] (:changes state)]
-    (let [point (pt/<-string point)]
-      (set! (.-fillStyle drawing-context) "blue")
-      (.fillRect drawing-context (:x point) (:y point) 1 1))))
+    (let [point (pt/string-> point)
+          x (* (:x point) util/pixel-length)
+          y (* (:y point) util/pixel-length)]
+      (if id
+        (do
+          (set! (.-fillStyle drawing-context) "blue")
+          (.fillRect drawing-context x y util/pixel-length util/pixel-length))
+        (.clearRect drawing-context x y util/pixel-length util/pixel-length)))))
