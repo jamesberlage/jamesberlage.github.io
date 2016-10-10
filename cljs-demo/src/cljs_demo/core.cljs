@@ -27,7 +27,6 @@
   (let [button-element (js/document.getElementById "eval")
         code-element (js/document.getElementById "code")
         result-element (js/document.getElementById "result")]
-    (set! (.-onclick button-element) #(eval-user-input code-element result-element))
-    (eval-user-input code-element result-element)))
+    (set! (.-onclick button-element) #(eval-user-input code-element result-element))))
 
 (main)
